@@ -31,11 +31,16 @@ RUN curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/ca
 
 # --- Install Go ---
 ENV GO_VERSION=${GO_VERSION}
-RUN curl -sSL "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" | tar -C /usr/local -xz
+RUN ARCH="$(uname -m)" && \
+    case "$ARCH" in \
+      x86_64) GOARCH=amd64 ;; \
+      aarch64) GOARCH=arm64 ;; \
+      *) echo "Unsupported architecture: $ARCH" && exit 1 ;; \
+    esac && \
+    curl -sSL "https://go.dev/dl/go${GO_VERSION}.linux-${GOARCH}.tar.gz" | tar -C /usr/local -xz
 ENV PATH="/usr/local/go/bin:/root/go/bin:${PATH}"
 
 # --- Go tools ---
-ENV CGO_ENABLED=0
 RUN go install golang.org/x/tools/gopls@latest && \
     go install github.com/go-delve/delve/cmd/dlv@latest && \
     go install honnef.co/go/tools/cmd/staticcheck@latest && \
