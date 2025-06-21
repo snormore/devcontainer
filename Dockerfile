@@ -113,9 +113,13 @@ RUN ln -sf /usr/local/bin/nvim /usr/bin/vim && \
 COPY ./nvim /root/.config/nvim
 RUN nvim --headless "+Lazy sync" +qa
 
-# --- Set testcontainers host override ---
-# This is needed for the ryuk container to be able to connect to the host.
-ENV TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal
+# Alias to access the DinD container's published ports from inside the container,
+# since localhost does not route through NAT. Used in place of `localhost`.
+ENV DIND_LOCALHOST=host.docker.internal
+
+# Tell Testcontainers to connect to the Docker daemon via host.docker.internal,
+# so sidecar containers like Ryuk can reach the DinD container hosting the daemon.
+ENV TESTCONTAINERS_HOST_OVERRIDE=${DIND_LOCALHOST}
 
 # --- Configure entrypoint ---
 COPY ./entrypoint.sh /entrypoint.sh
