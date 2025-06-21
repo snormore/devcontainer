@@ -17,6 +17,11 @@ if [ -z "${NO_SSH:-}" ]; then
 fi
 
 # Start and attach to the workspace container.
+if [ -n "${CMD:-}" ]; then
+    command=(bash -c "${CMD}")
+else
+    command=(bash)
+fi
 docker run -it --rm \
     --name "${DEV_WORKSPACE_NAME}" \
     --volume "${workspace_dir}:/workspace" \
@@ -24,4 +29,5 @@ docker run -it --rm \
     --volume /var/run/docker.sock:/var/run/docker.sock \
     --volume "${SSH_AUTH_SOCK}:/ssh-agent" \
     --env "SSH_AUTH_SOCK=/ssh-agent" \
-    "${DEV_WORKSPACE_IMAGE}"
+    "${DEV_WORKSPACE_IMAGE}" \
+    "${command[@]}"

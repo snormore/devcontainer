@@ -131,3 +131,12 @@ RUN ln -sf /usr/local/bin/nvim /usr/bin/vim && \
 
 COPY ./nvim /root/.config/nvim
 RUN nvim --headless "+Lazy sync" +qa
+
+# --- Set testcontainers host override ---
+ENV TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal
+
+# --- Configure entrypoint ---
+COPY ./entrypoint.sh /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
+
+CMD ["/bin/bash"]
