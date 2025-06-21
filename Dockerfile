@@ -79,6 +79,12 @@ ENV PATH="/opt/solana/bin:${PATH}"
 # --- Configure bash completion ---
 RUN echo '[ -f /etc/bash_completion ] && . /etc/bash_completion' >> /root/.bashrc
 
+# --- Install fd ---
+RUN apt-get update -qq && \
+    apt-get install -y fd-find && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 # --- Install fzf ---
 RUN git clone --depth 1 https://github.com/junegunn/fzf.git /opt/fzf && \
     /opt/fzf/install --bin && \
@@ -100,6 +106,5 @@ RUN ARCH=$(dpkg --print-architecture) && \
 RUN ln -sf /usr/local/bin/nvim /usr/bin/vim && \
     ln -sf /usr/local/bin/nvim /usr/bin/vi
 
-COPY ./nvim/init.lua /root/.config/nvim/init.lua
-COPY ./nvim/plugins.lua /root/.config/nvim/lua/plugins.lua
+COPY ./nvim /root/.config/nvim
 RUN nvim --headless "+Lazy sync" +qa

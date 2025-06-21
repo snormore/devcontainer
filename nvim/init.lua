@@ -16,5 +16,35 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
+-- Set up diagnostic display
+vim.diagnostic.config({
+  virtual_text = true,
+  signs = true,
+  underline = true,
+  update_in_insert = false,
+  severity_sort = true,
+})
+
+-- Keymaps for LSP
+local on_attach = function(_, bufnr)
+  local opts = { buffer = bufnr }
+  vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
+  vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
+  vim.keymap.set("n", "gi", vim.lsp.buf.implementation, opts)
+  vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)
+  vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, opts)
+  vim.keymap.set("n", "<leader>f", function() vim.lsp.buf.format({ async = true }) end, opts)
+end
+
 -- Load plugins
-require("plugins")
+require("plugins").setup(on_attach)
+
+vim.keymap.set("n", "<C-p>", ":Files<CR>", { silent = true })
+
+vim.env.FZF_DEFAULT_COMMAND = "fdfind --type f --strip-cwd-prefix --hidden --exclude .git --exclude target --exclude node_modules"
+
+vim.api.nvim_create_autocmd("TermOpen", {
+  callback = function()
+    vim.keymap.set("t", "<Esc>", [[<C-\><C-n>]], { buffer = true })
+  end,
+})
