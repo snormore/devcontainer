@@ -87,7 +87,7 @@ RUN git clone --depth 1 https://github.com/junegunn/fzf.git /opt/fzf && \
 # --- Install neovim ---
 RUN ARCH=$(dpkg --print-architecture) && \
     case "$ARCH" in \
-      amd64)  FILE=nvim-linux64.tar.gz ;; \
+      amd64)  FILE=nvim-linux-x86_64.tar.gz ;; \
       arm64)  FILE=nvim-linux-arm64.tar.gz ;; \
       *)      echo "Unsupported architecture: $ARCH" && exit 1 ;; \
     esac && \
