@@ -59,6 +59,7 @@ RUN echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | tee /etc/apt/s
     rm -rf /var/lib/apt/lists/*
 
 # --- Install agave/solana tools ---
+# https://github.com/anza-xyz/agave/issues/1734
 RUN ARCH=$(uname -m) && \
     case "$ARCH" in \
         x86_64) ARCH_TAG=x86_64 ;; \
