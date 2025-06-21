@@ -3,16 +3,34 @@ FROM ubuntu:24.04
 ARG GO_VERSION=1.24.3
 
 # --- Install base utilities ---
-RUN apt update -qq && \
+    RUN apt update -qq && \
     apt install -y \
-    git curl unzip bash-completion build-essential \
+    git curl unzip bash-completion build-essential vim sudo \
     ca-certificates libssl-dev \
     gcc-x86-64-linux-gnu \
-    docker.io \
     iproute2 tcpdump iperf3 \
     lsb-release gnupg && \
     apt clean && \
     rm -rf /var/lib/apt/lists/*
+
+# --- Install Docker CLI ---
+RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/docker.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/trusted.gpg.d/docker.gpg] https://download.docker.com/linux/ubuntu \
+    $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list && \
+    apt-get update && \
+    apt-get install -y docker-ce-cli
+
+# --- Detect arch and install buildx plugin ---
+RUN ARCH="$(uname -m)"; \
+    case "$ARCH" in \
+        x86_64) BUILDARCH="amd64" ;; \
+        aarch64) BUILDARCH="arm64" ;; \
+        *) echo "Unsupported arch: $ARCH" && exit 1 ;; \
+    esac && \
+    BUILDX_VERSION="v0.14.0" && \
+    mkdir -p ~/.docker/cli-plugins && \
+    curl -L --fail https://github.com/docker/buildx/releases/download/${BUILDX_VERSION}/buildx-${BUILDX_VERSION}.linux-${BUILDARCH} -o ~/.docker/cli-plugins/docker-buildx && \
+    chmod +x ~/.docker/cli-plugins/docker-buildx
 
 # --- Install Rust ---
 ENV RUSTUP_HOME=/usr/local/rustup \
