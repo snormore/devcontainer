@@ -9,10 +9,19 @@ cd "${workspace_dir}"
 # Build the workspace image.
 dev/build
 
+# If NO_SSH is not set, start ssh-agent and add identities.
+if [ -z "${NO_SSH:-}" ]; then
+    echo "==> Starting ssh-agent..."
+    eval "$(ssh-agent -s)" &> /dev/null
+    ssh-add ~/.ssh/id_ed25519 &> /dev/null || true
+fi
+
 # Start and attach to the workspace container.
 docker run -it --rm \
     --name "${DEV_WORKSPACE_NAME}" \
     --volume "${workspace_dir}:/workspace" \
     --workdir "/workspace" \
     --volume /var/run/docker.sock:/var/run/docker.sock \
+    --volume "${SSH_AUTH_SOCK}:/ssh-agent" \
+    --env "SSH_AUTH_SOCK=/ssh-agent" \
     "${DEV_WORKSPACE_IMAGE}"
