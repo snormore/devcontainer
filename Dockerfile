@@ -26,7 +26,8 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y && \
 
 # --- Install Rust tools ---
 RUN curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash && \
-    cargo binstall cargo-nextest
+    cargo binstall cargo-nextest && \
+    cargo install bottom
 
 # --- Install Go ---
 ENV GO_VERSION=${GO_VERSION}
@@ -57,6 +58,26 @@ RUN echo 'deb [trusted=yes] https://repo.goreleaser.com/apt/ /' | tee /etc/apt/s
     apt clean && \
     rm -rf /var/lib/apt/lists/*
 
+# --- Install agave/solana tools ---
+RUN ARCH=$(uname -m) && \
+    case "$ARCH" in \
+        x86_64) ARCH_TAG=x86_64 ;; \
+        aarch64) ARCH_TAG=aarch64 ;; \
+        *) echo "Unsupported architecture: $ARCH" && exit 1 ;; \
+    esac && \
+    VERSION=$(curl -s https://api.github.com/repos/staratlasmeta/agave-dist/releases/latest | grep tag_name | cut -d '"' -f 4) && \
+    URL="https://github.com/staratlasmeta/agave-dist/releases/download/${VERSION}/solana-release-${ARCH_TAG}-unknown-linux-gnu.tar.bz2" && \
+    mkdir -p /opt/agave && \
+    curl -sL "$URL" -o /tmp/agave.tar.bz2 && \
+    tar -xjf /tmp/agave.tar.bz2 -C /opt/agave && \
+    mkdir -p /opt/solana/bin && \
+    cp -r /opt/agave/solana-release/bin/* /opt/solana/bin/ && \
+    rm -rf /tmp/agave.tar.bz2
+ENV PATH="/opt/solana/bin:${PATH}"
+
+# --- Configure bash completion ---
+RUN echo '[ -f /etc/bash_completion ] && . /etc/bash_completion' >> /root/.bashrc
+
 # --- Install fzf ---
 RUN git clone --depth 1 https://github.com/junegunn/fzf.git /opt/fzf && \
     /opt/fzf/install --bin && \
@@ -75,10 +96,8 @@ RUN ARCH=$(dpkg --print-architecture) && \
     ln -sf /opt/nvim/bin/nvim /usr/local/bin/nvim && \
     rm $FILE && \
     mkdir -p /root/.config/nvim
-RUN ln -sf /usr/local/bin/nvim /usr/bin/vim
-
-# --- Configure bash completion ---
-RUN echo '[ -f /etc/bash_completion ] && . /etc/bash_completion' >> /root/.bashrc
+RUN ln -sf /usr/local/bin/nvim /usr/bin/vim && \
+    ln -sf /usr/local/bin/nvim /usr/bin/vi
 
 COPY ./nvim/init.lua /root/.config/nvim/init.lua
 COPY ./nvim/plugins.lua /root/.config/nvim/lua/plugins.lua
