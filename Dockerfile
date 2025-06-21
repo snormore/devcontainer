@@ -1,4 +1,4 @@
-FROM ubuntu:24.04
+FROM cruizba/ubuntu-dind
 
 ARG GO_VERSION=1.24.3
 
@@ -12,25 +12,6 @@ ARG GO_VERSION=1.24.3
     lsb-release gnupg && \
     apt clean && \
     rm -rf /var/lib/apt/lists/*
-
-# --- Install Docker CLI ---
-RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/trusted.gpg.d/docker.gpg && \
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/trusted.gpg.d/docker.gpg] https://download.docker.com/linux/ubuntu \
-    $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list && \
-    apt-get update && \
-    apt-get install -y docker-ce-cli
-
-# --- Detect arch and install buildx plugin ---
-RUN ARCH="$(uname -m)"; \
-    case "$ARCH" in \
-        x86_64) BUILDARCH="amd64" ;; \
-        aarch64) BUILDARCH="arm64" ;; \
-        *) echo "Unsupported arch: $ARCH" && exit 1 ;; \
-    esac && \
-    BUILDX_VERSION="v0.14.0" && \
-    mkdir -p ~/.docker/cli-plugins && \
-    curl -L --fail https://github.com/docker/buildx/releases/download/${BUILDX_VERSION}/buildx-${BUILDX_VERSION}.linux-${BUILDARCH} -o ~/.docker/cli-plugins/docker-buildx && \
-    chmod +x ~/.docker/cli-plugins/docker-buildx
 
 # --- Install Rust ---
 ENV RUSTUP_HOME=/usr/local/rustup \
@@ -133,6 +114,7 @@ COPY ./nvim /root/.config/nvim
 RUN nvim --headless "+Lazy sync" +qa
 
 # --- Set testcontainers host override ---
+# This is needed for the ryuk container to be able to connect to the host.
 ENV TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal
 
 # --- Configure entrypoint ---
